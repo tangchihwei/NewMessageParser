@@ -1,0 +1,61 @@
+from __future__ import absolute_import
+from subprocess import call
+from dispatcher import MessageDispatcher
+from difflib import SequenceMatcher
+
+def slack_msg_parser(msg):
+    #print msg
+    if 'text' in msg:
+        text = msg['text']
+#        call(["./codesend","1119683","1119683"])
+    elif 'attachments' in msg:
+        text = msg['attachments'][0]['pretext']
+    text = str(text)
+    return text
+
+
+class newMessageDispatcher(MessageDispatcher):
+    def test(self):
+        print "test in sub class"
+
+    def slack_msg_parser(msg):
+        if 'text' in msg:
+            text = msg['text']
+        elif 'attachments' in msg:
+            text = msg['attachments'][0]['pretext']
+        text = (str(text)).upper()
+        
+        return text
+
+    def string_compare(str1, str2):
+        if str1.isupper() is false:
+            str1 = str1.upper()
+        if str2.isupper() is false:
+            str2 = str2.upper()
+        return SequenceMatcher(None, str1, str2).ratio()
+
+    def slack_msg_dispatcher(self,msg):
+        category = msg[0]
+        msg = msg[1]
+        text = slack_msg_parser(msg)
+        responded = False
+        for func, args in self._plugins.get_plugins(category, text):
+            if func:
+                responded = True
+                try:
+                    func(Message(self._client, msg), *args)
+                except:
+                    logger.exception('failed to handle message %s with plugin "%s"', text, func.__name__)
+                    reply = '[%s] I have problem when handling "%s"\n' % (func.__name__, text)
+                    reply += '```\n%s\n```' % traceback.format_exc()
+                    self._client.rtm_send_message(msg['channel'], reply)
+            else:
+                print "Let me check if you had a typo... \n"
+                for p, v in iteritems(self._plugins.commands['respond_to']):
+                    print p, v
+
+            if not responded and category == 'respond_to':
+                self._default_reply(msg)
+
+
+
