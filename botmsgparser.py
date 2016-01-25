@@ -1,7 +1,13 @@
-from __future__ import absolute_import
+#from __future__ import absolute_import
 from subprocess import call
-from dispatcher import MessageDispatcher
+from dispatcher import MessageDispatcher, Message
 from difflib import SequenceMatcher
+from six import iteritems
+from slackbot.utils import to_utf8, WorkerPool
+import logging
+import traceback
+
+logger = logging.getLogger(__name__)
 
 def slack_msg_parser(msg):
     #print msg
@@ -15,6 +21,11 @@ def slack_msg_parser(msg):
 
 
 class newMessageDispatcher(MessageDispatcher):
+    def __init__(self, slackclient, plugins):
+        self._client = slackclient
+        self._pool = WorkerPool(self.slack_msg_dispatcher)
+        self._plugins = plugins
+        
     def test(self):
         print "test in sub class"
 
@@ -27,7 +38,7 @@ class newMessageDispatcher(MessageDispatcher):
         
         return text
 
-    def string_compare(str1, str2):
+    def typo_check(str1, str2):
         if str1.isupper() is false:
             str1 = str1.upper()
         if str2.isupper() is false:
@@ -52,10 +63,8 @@ class newMessageDispatcher(MessageDispatcher):
             else:
                 print "Let me check if you had a typo... \n"
                 for p, v in iteritems(self._plugins.commands['respond_to']):
-                    print p, v
+                    print v
 
             if not responded and category == 'respond_to':
                 self._default_reply(msg)
-
-
 
