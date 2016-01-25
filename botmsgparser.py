@@ -62,9 +62,12 @@ class newMessageDispatcher(MessageDispatcher):
                     self._client.rtm_send_message(msg['channel'], reply)
             else:
                 print "Let me check if you had a typo... \n"
-                for p, v in iteritems(self._plugins.commands['respond_to']):
-                    print v
-
+               # for p, v in iteritems(self._plugins.commands['respond_to']):
+                    #print v
+                for matcher in self._plugins.commands[category]:
+                    print matcher.pattern
+                    r = typo_check(str(matcher.pattern),str(text))
+                    print r
+                    print "\n"
             if not responded and category == 'respond_to':
                 self._default_reply(msg)
-
