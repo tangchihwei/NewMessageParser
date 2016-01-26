@@ -13,7 +13,6 @@ def slack_msg_parser(msg):
     #print msg
     if 'text' in msg:
         text = msg['text']
-#        call(["./codesend","1119683","1119683"])
     elif 'attachments' in msg:
         text = msg['attachments'][0]['pretext']
     text = str(text)
@@ -38,10 +37,10 @@ class newMessageDispatcher(MessageDispatcher):
         
         return text
 
-    def typo_check(str1, str2):
-        if str1.isupper() is false:
+    def typo_check(self, str1, str2):
+        if str1.isupper() is False:
             str1 = str1.upper()
-        if str2.isupper() is false:
+        if str2.isupper() is False:
             str2 = str2.upper()
         return SequenceMatcher(None, str1, str2).ratio()
 
@@ -65,9 +64,20 @@ class newMessageDispatcher(MessageDispatcher):
                # for p, v in iteritems(self._plugins.commands['respond_to']):
                     #print v
                 for matcher in self._plugins.commands[category]:
-                    print matcher.pattern
-                    r = typo_check(str(matcher.pattern),str(text))
-                    print r
-                    print "\n"
+                    #print "matcher: " + "".join(matcher.pattern) + " text: " + "".join(text) 
+                    #print "= "                                               
+                    #print self. typo_check(matcher.pattern,text)
+                    if self.typo_check(matcher.pattern, text) >=0.88:
+                        responded = True
+                        try:
+                            print "I think you actually mean..." + 
+                            func(Message(self._client, msg), *args)
+                    except:
+                        logger.exception('failed to handle message %s with plugin "%s"', text, func.__name__)
+                        reply = '[%s] I have problem when handling "%s"\n' % (func.__name__, text)
+                        reply += '```\n%s\n```' % traceback.format_exc()
+                        self._client.rtm_send_message(msg['channel'], reply)
+#                    print r
+#                    print "\n"
             if not responded and category == 'respond_to':
                 self._default_reply(msg)
